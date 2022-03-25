@@ -1,28 +1,18 @@
-import json
 import os
-
-import NextcordUtils
-import asyncpraw
-import asyncpraw.models.user
+from datetime import datetime
 from pprint import pprint
 
-from datetime import datetime
-
-from pagination import AutoEmbedPaginator
-from RedditModNotes import ModNoteLabels, ModNoteHumanLabels
+import asyncpraw.models.user
 from dotenv import load_dotenv
 
-load_dotenv()
-try:
-    from nextcord.ext import commands
-    from nextcord import Interaction, SlashOption
-    import nextcord
+from RedditModNotes import ModNoteLabels, ModNoteHumanLabels
+from pagination import AutoEmbedPaginator
 
-except ImportError:
-    os.system("pip install -U nextcord")
-    from nextcord.ext import commands
-    from nextcord import Interaction
-    import nextcord
+load_dotenv()
+
+from nextcord.ext import commands
+from nextcord import Interaction, SlashOption
+import nextcord
 
 reddit = asyncpraw.Reddit(
     client_id=os.getenv("REDDIT_CLIENT_ID"),
@@ -53,7 +43,8 @@ async def generate_embed(note: asyncpraw.models.ModNote, embed: nextcord.Embed, 
     if not justNotes:
         embed.add_field(name="Type", value=note.type, inline=True)
     embed.add_field(name="Label",
-                    value=ModNoteHumanLabels[note.user_note_data['label']] if note.user_note_data['label'] is not None else 'None')
+                    value=ModNoteHumanLabels[note.user_note_data['label']] if note.user_note_data[
+                                                                                  'label'] is not None else 'None')
     date_time = datetime.fromtimestamp(note.created_at)
     embed.add_field(name="Time", value=str(date_time))
     embed.add_field(name='Message', value=note.user_note_data['note'], inline=True)
@@ -70,26 +61,26 @@ async def generate_embed(note: asyncpraw.models.ModNote, embed: nextcord.Embed, 
         embed.add_field(name="Link", value="None", inline=True)
     return embed
 
+
 @bot.slash_command(name='write', description='Writes a modnote to a user', guild_ids=[server])
 async def write(interaction: Interaction, user=SlashOption(required=True, description='User to lookup'),
-                note = SlashOption(required=True, description='Mod note to leave'),
-                label = SlashOption(description='Label to add to note',default='None', choices=ModNoteLabels),
+                note=SlashOption(required=True, description='Mod note to leave'),
+                label=SlashOption(description='Label to add to note', default='None', choices=ModNoteLabels),
                 subreddit=SlashOption(default=default_sub, description='subreddit to use')):
     await interaction.response.send_message('Adding Mod Note now')
     subreddit_obj = await reddit.subreddit(subreddit)
     user_obj = await reddit.redditor(user)
     if label == 'None':
-        label=None
+        label = None
     pprint(label)
-    notes = await(await subreddit_obj.notes.add(user_obj,note=note,label=label))
-
+    notes = await(await subreddit_obj.notes.add(user_obj, note=note, label=label))
 
 
 @bot.slash_command(name='read', description='Reads mod notes of a user', guild_ids=[server])
 async def read(interaction: Interaction, user=SlashOption(required=True, description='User to lookup'),
                subreddit=SlashOption(default=default_sub, description='subreddit to use'),
                just_notes: bool = SlashOption(default=True, description='Should this return only Mod Notes?')):
-               #filter: str = SlashOption(description='Filter of label types', choices=ModNoteLabels, default='NONE')):
+    # filter: str = SlashOption(description='Filter of label types', choices=ModNoteLabels, default='NONE')):
     await interaction.response.send_message('Reading!')
     subreddit_obj = await reddit.subreddit(subreddit)
     user_obj = await reddit.redditor(user)
